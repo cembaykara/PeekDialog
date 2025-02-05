@@ -22,7 +22,7 @@ PeekDialog is a lightweight and customizable SwiftUI component for displaying te
 
 ##### With Packages.swift
 
-Add SwiftyEndpoint to your `Package.swift`:
+Add PeekDialog to your `Package.swift`:
 
 ```swift
 dependencies: [ 
