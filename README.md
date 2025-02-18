@@ -66,7 +66,8 @@ You can also bind the dialog to an optional item. The dialog will automatically 
 
 ```swift
 struct ContentView: View {
-    @State private var activeItem: String? = nil
+
+    @State private var myString: String? = nil
 
     var body: some View {
         VStack {
@@ -74,14 +75,12 @@ struct ContentView: View {
                 activeItem = "Example Item"
             }
         }
-        .peekDialog(with: $activeItem, dismissDelay: .long) {
-            if let item = activeItem {
-                Text("Dialog for item: \(item)")
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(8)
-                    .shadow(radius: 10)
-            }
+        .peekDialog(with: $myString, dismissDelay: .long) { item in
+             Text("Dialog for item: \(item)")
+                .padding()
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(radius: 10)
         }
     }
 }
@@ -93,7 +92,7 @@ struct ContentView: View {
 You can define a duration by using `PeekDialogDelay.custom(seconds: Double)`.
 
 ```swift
-	.peekDialog(with: $activeItem, dismissDelay: .custom(seconds: 1.25)) {
+	.peekDialog(with: $myItem, dismissDelay: .custom(seconds: 1.25)) { item in
 		/* ... */
 	}
 ```
