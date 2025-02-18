@@ -40,18 +40,17 @@ public extension View {
 	///
 	/// - Note: The `dismissDelay` parameter allows you to control how long the dialog stays visible. Use `.persistent`
 	///   if you want the dialog to remain visible until the user dismisses it manually.
-	func peekDialog<Content: View>(
-		isPresented: Binding<Bool>,
-		dismissDelay: PeekDialogDelay = .persistent,
-		@ViewBuilder content: () -> Content) -> some View {
-			
-			modifier(
-				PeekDialog(isPresented: isPresented,
-						   selfDismissDelay: dismissDelay,
-						   content: content
-						  )
-			)
-		}
+	func peekDialog<Content: View>(isPresented: Binding<Bool>,
+								   dismissDelay: PeekDialogDelay = .persistent,
+								   @ViewBuilder content: () -> Content) -> some View {
+		
+		modifier(
+			PeekDialog(isPresented: isPresented,
+					   selfDismissDelay: dismissDelay,
+					   content: content
+					  )
+		)
+	}
 	
 	/// Displays a peek dialog with customizable content and dismissal behavior, tied to an optional item.
 	///
@@ -68,21 +67,19 @@ public extension View {
 	///
 	/// ## Example:
 	///   ```swift
-	///   @State private var activeItem: String? = nil
+	///   @State private var myString: String? = nil
 	///
 	///   var body: some View {
 	///       Button("Show Dialog with Item") {
 	///           activeItem = "Example Item"
 	///       }
-	///       .peekDialog(with: $activeItem, dismissDelay: .medium) {
-	///           if let item = activeItem {
+	///       .peekDialog(with: $myString, dismissDelay: .medium) { item in
 	///               Text("Dialog for item: \(item)")
 	///                   .padding()
 	///                   .background(Color.white)
 	///                   .cornerRadius(8)
 	///                   .shadow(radius: 10)
 	///           }
-	///       }
 	///   }
 	///   ```
 	///
@@ -90,15 +87,33 @@ public extension View {
 	/// Use `.persistent` if you want the dialog to remain visible until the user dismisses it manually
 	/// or the item becomes `nil`.
 	func peekDialog<T, Content: View>(with
-		item: Binding<T?>,
-		dismissDelay: PeekDialogDelay = .persistent,
-		@ViewBuilder content: () -> Content) -> some View {
-			
-			modifier(
-				PeekDialog(item: item,
-						   selfDismissDelay: dismissDelay,
-						   content: content
-						  )
-			)
-		}
+									  item: Binding<T?>,
+									  dismissDelay: PeekDialogDelay = .persistent,
+									  @ViewBuilder content: @escaping (T) -> Content) -> some View {
+		
+		modifier(
+			PeekDialog(item: item,
+					   selfDismissDelay: dismissDelay,
+					   content: {
+						   if let item = item.wrappedValue {
+							   content(item)
+						   }
+					   }
+					  )
+		)
+	}
+	
+	@available(*, deprecated, message: "Use peekDialog(with:dismissDelay:content:) with item parameter in closure instead.")
+	func peekDialog<T, Content: View>(with
+									  item: Binding<T?>,
+									  dismissDelay: PeekDialogDelay = .persistent,
+									  @ViewBuilder content: () -> Content) -> some View {
+		
+		modifier(
+			PeekDialog(item: item,
+					   selfDismissDelay: dismissDelay,
+					   content: content
+					  )
+		)
+	}
 }

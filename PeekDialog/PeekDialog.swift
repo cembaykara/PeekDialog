@@ -165,13 +165,13 @@ public enum PeekDialogDelay {
 			VStack {
 				Button("Show banner") { withAnimation { item = mode } }
 			}
-			.peekDialog(with: $item) {
+			.peekDialog(with: $item) { item in
 				HStack(alignment: .firstTextBaseline) {
 					Image(systemName: "film.fill")
 						.foregroundColor(Color.yellow)
 						.padding()
 					
-					Text("Something")
+					Text("The item is \(item)")
 						.padding()
 					
 					
