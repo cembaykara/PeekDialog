@@ -1,11 +1,12 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
+//
+//  PeekDialog.swift
+//  PeekDialog
+//
+//  Created by Baris Cem Baykara.
+//
 import SwiftUI
 
 struct PeekDialog<PassedContent: View>: ViewModifier {
-	
-	typealias Style = ButtonStyle
 	
 	@Environment(\.horizontalSizeClass) private var horizontalSizeClass
 	
