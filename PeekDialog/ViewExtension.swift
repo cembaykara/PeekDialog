@@ -89,11 +89,13 @@ public extension View {
 	func peekDialog<T, Content: View>(with
 									  item: Binding<T?>,
 									  dismissDelay: PeekDialogDelay = .persistent,
+									  onDismiss: (() -> Void)? = nil,
 									  @ViewBuilder content: @escaping (T) -> Content) -> some View {
 		
 		modifier(
 			PeekDialog(item: item,
 					   selfDismissDelay: dismissDelay,
+					   onDismiss: onDismiss,
 					   content: {
 						   if let item = item.wrappedValue {
 							   content(item)
@@ -107,11 +109,13 @@ public extension View {
 	func peekDialog<T, Content: View>(with
 									  item: Binding<T?>,
 									  dismissDelay: PeekDialogDelay = .persistent,
+									  onDismiss: (() -> Void)? = nil,
 									  @ViewBuilder content: () -> Content) -> some View {
 		
 		modifier(
 			PeekDialog(item: item,
 					   selfDismissDelay: dismissDelay,
+					   onDismiss: onDismiss,
 					   content: content
 					  )
 		)
