@@ -18,6 +18,7 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 	@State private var opacity: Double = 1.0
 	@State private var timer: Timer?
 	
+	private let onDismiss: (() -> Void)?
 	private var delay: Double = 0
 	private let transition = AnyTransition.asymmetric(
 		insertion: .move(edge: .top),
@@ -26,10 +27,12 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 	init<T>(
 		item: Binding<T?>,
 		selfDismissDelay: PeekDialogDelay = .persistent,
+		onDismiss: (() -> Void)? = nil,
 		@ViewBuilder content: () -> PassedContent) {
 			
 			self.passedContnet = content()
 			self.delay = selfDismissDelay.duration
+			self.onDismiss = onDismiss
 			
 			self._isPresented = Binding<Bool>(
 				get: { item.wrappedValue != nil },
@@ -39,11 +42,12 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 	init(
 		isPresented: Binding<Bool>,
 		selfDismissDelay: PeekDialogDelay = .persistent,
+		onDismiss: (() -> Void)? = nil,
 		@ViewBuilder content: () -> PassedContent) {
 			
 			self._isPresented = isPresented
 			self.passedContnet = content()
-			
+			self.onDismiss = onDismiss
 			self.delay = selfDismissDelay.duration
 		}
 	
@@ -111,6 +115,8 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 				timer?.invalidate()
 				timer = nil
 				offset = .zero
+				
+				onDismiss?()
 			}
 		}
 	}
@@ -166,7 +172,9 @@ public enum PeekDialogDelay {
 			VStack {
 				Button("Show banner") { withAnimation { item = mode } }
 			}
-			.peekDialog(with: $item) { item in
+			.peekDialog(with: $item,
+						onDismiss: { print("Dismissed") })
+						{ item in
 				HStack(alignment: .firstTextBaseline) {
 					Image(systemName: "film.fill")
 						.foregroundColor(Color.yellow)
