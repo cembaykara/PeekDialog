@@ -3,9 +3,10 @@
 
 PeekDialog is a lightweight and customizable SwiftUI component for displaying temporary, non-intrusive dialogs (or "peek dialogs") in your iOS apps. It supports automatic dismissal after a specified delay or manual dismissal via a drag gesture. Perfect for showing notifications, alerts, or other transient messages.
 
-  <div style="display: flex; justify-content: space-around;">
-    <img src="images/screen.gif" alt="Screenshot 1" style="width: 40%; border-radius: 8px;"/>
-  </div>
+ <p align="center">
+  <img src="images/screen.gif" alt="Screenshot 1" width="40%" style="border-radius:8px;"/>
+  <img src="images/screen2.gif" alt="Screenshot 2" width="40%" style="border-radius:8px;"/>
+</p>
 
 ## ✨ Features
 

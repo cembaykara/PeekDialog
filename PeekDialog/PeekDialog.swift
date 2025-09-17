@@ -57,15 +57,21 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 			if isPresented {
 				VStack {
 					VStack {
-						passedContnet
-					}
-					.background {
-						RoundedRectangle(cornerRadius: 24)
-							.foregroundStyle(.regularMaterial)
+						if #available(iOS 26.0, watchOS 26.0, tvOS 26.0, macOS 26.0, visionOS 26.0, *) {
+							passedContnet
+								.glassEffect(.clear.interactive(), in: .rect(cornerRadius: 30))
+								.background { Rectangle().opacity(0.01) } // Workaround
+								
+						} else {
+							passedContnet
+								.background {
+									RoundedRectangle(cornerRadius: 24)
+										.foregroundStyle(.regularMaterial)
+								}
+						}
 					}
 					.shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
-					.frame(
-						maxWidth: horizontalSizeClass == .regular ? 420 : .infinity)
+					.frame(maxWidth: horizontalSizeClass == .regular ? 420 : .infinity)
 					
 					Spacer()
 				}
@@ -86,9 +92,7 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 								offset = CGSize(width: 0, height: gesture.translation.height)
 								dismiss()
 							} else {
-								withAnimation(.interactiveSpring()) {
-									offset = .zero
-								}
+								withAnimation(.interactiveSpring()) { offset = .zero }
 								if delay > 0 { setTimer() }
 							}
 						}
@@ -170,21 +174,57 @@ public enum PeekDialogDelay {
 		
 		var body: some View {
 			VStack {
+				Rectangle()
+					.fill(
+						LinearGradient(
+							gradient: Gradient(colors: [
+								Color.blue.opacity(0.8),
+								Color.purple.opacity(0.8),
+								Color.indigo.opacity(0.8)
+							]),
+							startPoint: .topLeading,
+							endPoint: .bottomTrailing
+						)
+					)
+					.overlay(
+						Image(systemName: "person.crop.circle.fill")
+							.resizable()
+							.scaledToFit()
+							.foregroundStyle(
+								LinearGradient(
+									colors: [.white.opacity(0.9), .white.opacity(0.3)],
+									startPoint: .top,
+									endPoint: .bottom
+								)
+							)
+							.frame(width: 80, height: 80)
+							.shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+							.padding()
+					)
+					.frame(height: 360)
+					.shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 5)
+					.ignoresSafeArea(.all)
+				
+				Spacer()
+				
 				Button("Show banner") { withAnimation { item = mode } }
+				
+				Spacer()
 			}
 			.peekDialog(with: $item,
-						onDismiss: { print("Dismissed") })
-						{ item in
-				HStack(alignment: .firstTextBaseline) {
-					Image(systemName: "film.fill")
-						.foregroundColor(Color.yellow)
-						.padding()
-					
-					Text("The item is \(item)")
-						.padding()
-					
-					
-					Spacer()
+						onDismiss: { print("Dismissed") }) { item in
+				
+				VStack {
+					HStack(alignment: .firstTextBaseline) {
+						Image(systemName: "info.triangle.fill")
+							.foregroundColor(Color.red)
+							.padding()
+						
+						Text("This is a long placeholder banner message.")
+							.padding()
+						
+						Spacer()
+					}
 				}
 			}
 		}
