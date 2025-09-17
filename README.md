@@ -9,9 +9,10 @@ PeekDialog is a lightweight and customizable SwiftUI component for displaying te
 </p>
 
 ## ✨ Features
-
+- 📱 **iOS Compatibility**: Supports iOS 15 and above.
+- ✨ **Glass Effect on iOS 26+**: Automatically applies a glass effect when available.
 - ⏳ **Customizable Duration**: Choose from predefined durations (short, medium, long) or specify a custom duration.
-- 👆 **Drag-to-Dismiss**: Users can swipe the dialog away to dismiss it.
+- 👆 **Swipe to Dismiss**: Users can swipe the dialog away to dismiss it.
 - 🖌️ **Flexible Content**: Use any SwiftUI view as the dialog's content.
 
 ## 🔧 Installation
