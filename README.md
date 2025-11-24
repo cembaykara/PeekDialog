@@ -10,14 +10,14 @@ PeekDialog is a lightweight and customizable SwiftUI component for displaying te
 
 ## ✨ Features
 - 📱 **iOS Compatibility**: Supports iOS 15 and above.
-- ✨ **Glass Effect on iOS 26+**: Automatically applies a glass effect when available.
+- ✨ **Glass Effect on iOS 26+**: ~~Automatically applies a glass effect when available.~~ This achieved now using `.dialogStyle(_ style:)` modifiers.
 - ⏳ **Customizable Duration**: Choose from predefined durations (short, medium, long) or specify a custom duration.
 - 👆 **Swipe to Dismiss**: Users can swipe the dialog away to dismiss it.
 - 🖌️ **Flexible Content**: Use any SwiftUI view as the dialog's content.
 
 ## 🔧 Installation
 
-##### Swift Package Manager
+##### Swift Package Managerv
  You can install the PeekDialog via Swift Package Manager.
  - In Xcode, add the PeekDialog by navigating to **File > Add Package Dependencies**
  - And enter the GitHub link: ```https://github.com/cembaykara/PeekDialog.git```
@@ -88,7 +88,6 @@ struct ContentView: View {
 }
 ```
 
-
 ##### Custom Duration
 
 You can define a duration by using `PeekDialogDelay.custom(seconds: Double)`.
@@ -97,6 +96,30 @@ You can define a duration by using `PeekDialogDelay.custom(seconds: Double)`.
 	.peekDialog(with: $myItem, dismissDelay: .custom(seconds: 1.25)) { item in
 		/* ... */
 	}
+```
+
+##### Custom Dialog Styles
+
+You can customize the appearance of your dialogs using the `.dialogStyle(_ style:)` modifier. PeekDialog comes with a built-in `.glassRegular` and `.glassClear` styles for iOS 26+, or you can create your own custom styles.
+
+```swift
+struct ContentView: View {
+    @State private var showDialog = false
+
+    var body: some View {
+        VStack {
+            Button("Show Glass Dialog") {
+                showDialog = true
+            }
+        }
+        .peekDialog(isPresented: $showDialog) {
+            VStack {
+                Text("This dialog has a glass effect!")
+            }
+            .dialogStyle(.glassRegular)
+        }
+    }
+}
 ```
 
 ## 🤝 Contributing

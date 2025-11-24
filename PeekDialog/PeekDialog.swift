@@ -8,8 +8,6 @@ import SwiftUI
 
 struct PeekDialog<PassedContent: View>: ViewModifier {
 	
-	@Environment(\.horizontalSizeClass) private var horizontalSizeClass
-	
 	@ViewBuilder private var passedContnet: PassedContent
 	
 	@Binding private var isPresented: Bool
@@ -17,12 +15,13 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 	@State private var offset: CGSize = .zero
 	@State private var opacity: Double = 1.0
 	@State private var timer: Timer?
+	@State private var style: AnyDialogStyle = .default
+	
+	private var delay: Double = 0
 	
 	private let onDismiss: (() -> Void)?
-	private var delay: Double = 0
-	private let transition = AnyTransition.asymmetric(
-		insertion: .move(edge: .top),
-		removal: .opacity)
+	private let transition = AnyTransition.asymmetric(insertion: .move(edge: .top),
+													  removal: .opacity)
 	
 	init<T>(
 		item: Binding<T?>,
@@ -44,7 +43,7 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 		selfDismissDelay: PeekDialogDelay = .persistent,
 		onDismiss: (() -> Void)? = nil,
 		@ViewBuilder content: () -> PassedContent) {
-			
+
 			self._isPresented = isPresented
 			self.passedContnet = content()
 			self.onDismiss = onDismiss
@@ -57,25 +56,18 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 			if isPresented {
 				VStack {
 					VStack {
-						if #available(iOS 26.0, watchOS 26.0, tvOS 26.0, macOS 26.0, visionOS 26.0, *) {
-							passedContnet
-								.glassEffect(.clear.interactive(), in: .rect(cornerRadius: 30))
-								.background { Rectangle().opacity(0.01) } // Workaround
-								
-						} else {
-							passedContnet
-								.background {
-									RoundedRectangle(cornerRadius: 24)
-										.foregroundStyle(.regularMaterial)
-								}
-						}
+						style.makeBody(configuration: .init(isPresented: isPresented,
+															passedContent: AnyView(passedContnet),
+															onDismiss: onDismiss))
 					}
 					.shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
-					.frame(maxWidth: horizontalSizeClass == .regular ? 420 : .infinity)
+					.onPreferenceChange(PeekDialogStylePreferenceKey.self) { newStyle in
+						style = newStyle
+					}
 					
 					Spacer()
 				}
-				.padding([.horizontal, .bottom])
+				.padding()
 				.offset(y: offset.height)
 				.opacity(opacity)
 				.transition(transition)
@@ -132,6 +124,10 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 			}
 		}
 	}
+	
+	private func setStyle(_ style: AnyDialogStyle) {
+		self.style = style
+	}
 }
 
 /// Defines the duration for which a peek dialog remains visible before automatically dismissing.
@@ -166,8 +162,8 @@ public enum PeekDialogDelay {
 	}
 }
 
+@available(iOS 26.0, *)
 #Preview {
-	
 	struct PreviewableDialog: View {
 		@State var item: Int? = 1
 		var mode: Int = 1
@@ -226,6 +222,7 @@ public enum PeekDialogDelay {
 						Spacer()
 					}
 				}
+				.dialogStyle(.glassRegular)
 			}
 		}
 	}
