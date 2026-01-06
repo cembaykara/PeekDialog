@@ -53,6 +53,13 @@ struct DefaultDialogStyle: DialogStyle {
 	}
 }
 
+public struct PlainDialogStyle: DialogStyle {
+	public func makeBody(configuration: Configuration) -> some View {
+		configuration.passedContent
+			.frame(maxWidth: 450, minHeight: 64)
+	}
+}
+
 @available(iOS 26.0, *)
 public struct GlassDialogStyle: DialogStyle {
 	let glassEffect: Glass
@@ -71,6 +78,10 @@ public extension DialogStyle where Self == GlassDialogStyle {
 	static var glassRegular: Self { GlassDialogStyle(glassEffect: .regular) }
 	
 	static var glassClear: Self { GlassDialogStyle(glassEffect: .clear) }
+}
+
+public extension DialogStyle where Self == PlainDialogStyle {
+	static var plain: Self { PlainDialogStyle() }
 }
 
 struct PeekDialogStylePreferenceKey: PreferenceKey {
