@@ -54,10 +54,10 @@ struct DefaultDialogStyle: DialogStyle {
 }
 
 @available(iOS 26.0, *)
-struct GlassDialogStyle: DialogStyle {
+public struct GlassDialogStyle: DialogStyle {
 	let glassEffect: Glass
 	
-	func makeBody(configuration: Configuration) -> some View {
+	public func makeBody(configuration: Configuration) -> some View {
 		configuration.passedContent
 			.frame(maxWidth: 450, minHeight: 64)
 			.glassEffect(glassEffect.interactive(), in: .rect(cornerRadius: 30))
@@ -66,7 +66,7 @@ struct GlassDialogStyle: DialogStyle {
 }
 
 @available(iOS 26.0, *)
-extension DialogStyle where Self == GlassDialogStyle {
+public extension DialogStyle where Self == GlassDialogStyle {
 	
 	static var glassRegular: Self { GlassDialogStyle(glassEffect: .regular) }
 	
