@@ -5,6 +5,7 @@
 //  Created by Baris Cem Baykara.
 //
 import SwiftUI
+import PeekDialog
 
 // MARK: - Preview Examples
 
@@ -208,7 +209,7 @@ import SwiftUI
 						.buttonStyle(.plain)
 						
 						// iOS 26+ Buttons
-						if #available(iOS 26.0, *) {
+						if #available(iOS 26.0, watchOS 26.0, *) {
 							// Success Notification Button (iOS 26+)
 							Button {
 								withAnimation {
@@ -255,7 +256,7 @@ import SwiftUI
 			// Success Notification Dialog (iOS 26+)
 			.peekDialog(isPresented: $showSuccess, dismissDelay: .short) {
 				Group {
-					if #available(iOS 26.0, *) {
+					if #available(iOS 26.0, watchOS 26.0, *) {
 						HStack(spacing: 12) {
 							Image(systemName: "checkmark.circle.fill")
 								.foregroundColor(.green)

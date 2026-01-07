@@ -15,5 +15,10 @@ let package = Package(
 		.target(
 			name: "PeekDialog",
 			path: "PeekDialog"),
+		.target(
+			name: "PeekDialogPreviews",
+			dependencies: ["PeekDialog"],
+			path: "Previews"
+		)
     ]
 )
