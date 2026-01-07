@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "PeekDialog",
-	platforms: [.iOS(.v15), .macOS(.v12), .watchOS(.v10), .visionOS(.v1)],
+	platforms: [.iOS(.v15), .watchOS(.v10), .visionOS(.v1)],
     products: [
         .library(
             name: "PeekDialog",

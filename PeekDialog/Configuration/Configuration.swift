@@ -60,7 +60,7 @@ public struct PlainDialogStyle: DialogStyle {
 	}
 }
 
-@available(iOS 26.0, *)
+@available(iOS 26.0, macCatalyst 26.0, visionOS 2.0, watchOS 26.0, tvOS 26.0, *)
 public struct GlassDialogStyle: DialogStyle {
 	let glassEffect: Glass
 	
@@ -72,7 +72,7 @@ public struct GlassDialogStyle: DialogStyle {
 	}
 }
 
-@available(iOS 26.0, *)
+@available(iOS 26.0,  macCatalyst 26.0, visionOS 2.0, watchOS 26.0, tvOS 26.0, *)
 public extension DialogStyle where Self == GlassDialogStyle {
 	
 	static var glassRegular: Self { GlassDialogStyle(glassEffect: .regular) }
