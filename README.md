@@ -22,7 +22,7 @@ Perfect for developers who want beautiful, fully customizable notifications.
 
 - 🎨 **Plain Style for Full Control**: Use `.dialogStyle(.plain)` to remove all default styling and create completely custom toast notifications with your own backgrounds, colors, and layouts
 - ⏳ **Auto-Dismissal**: Choose from predefined durations (short: 2s, medium: 5s, long: 8s) or set custom timing with `.custom(seconds:)`
-- 🖌️ **Customization**: Use any SwiftUI view as content - buttons, images, custom layouts, anything
+- ️ **Customization**: Use any SwiftUI view as content - buttons, images, custom layouts, anything
 
 ## 🔧 Installation
 
@@ -106,6 +106,16 @@ You can define a duration by using `PeekDialogDelay.custom(seconds:)`.
 
 ```swift
 	.peekDialog(with: $myItem, dismissDelay: .custom(seconds: 1.25)) { item in
+		/* ... */
+	}
+```
+
+##### Placement
+
+Pass `placement` to show the dialog at the top, center, or bottom. Default is `.top`.
+
+```swift
+	.peekDialog(isPresented: $showDialog, dismissDelay: .medium, placement: .bottom) {
 		/* ... */
 	}
 ```
