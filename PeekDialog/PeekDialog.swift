@@ -18,19 +18,27 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 	@State private var style: AnyDialogStyle = .default
 	
 	private var delay: Double = 0
-	
+	private let placement: VerticalAlignment
 	private let onDismiss: (() -> Void)?
-	private let transition = AnyTransition.asymmetric(insertion: .move(edge: .top),
-													  removal: .opacity)
+	
+	private var transition: AnyTransition {
+		switch placement {
+		case .top: .asymmetric(insertion: .move(edge: .top), removal: .opacity)
+		case .bottom: .asymmetric(insertion: .move(edge: .bottom), removal: .opacity)
+		default: .asymmetric(insertion: .opacity.combined(with: .scale(scale: 0.9)), removal: .opacity)
+		}
+	}
 	
 	init<T>(
 		item: Binding<T?>,
 		selfDismissDelay: PeekDialogDelay = .persistent,
+		placement: VerticalAlignment = .top,
 		onDismiss: (() -> Void)? = nil,
 		@ViewBuilder content: () -> PassedContent) {
 			
 			self.passedContnet = content()
 			self.delay = selfDismissDelay.duration
+			self.placement = placement
 			self.onDismiss = onDismiss
 			
 			self._isPresented = Binding<Bool>(
@@ -41,31 +49,40 @@ struct PeekDialog<PassedContent: View>: ViewModifier {
 	init(
 		isPresented: Binding<Bool>,
 		selfDismissDelay: PeekDialogDelay = .persistent,
+		placement: VerticalAlignment = .top,
 		onDismiss: (() -> Void)? = nil,
 		@ViewBuilder content: () -> PassedContent) {
 
 			self._isPresented = isPresented
 			self.passedContnet = content()
+			self.placement = placement
 			self.onDismiss = onDismiss
 			self.delay = selfDismissDelay.duration
 		}
+	
+	@ViewBuilder
+	private var dialogContent: some View {
+		VStack {
+			style.makeBody(configuration: .init(isPresented: isPresented,
+												passedContent: AnyView(passedContnet),
+												onDismiss: onDismiss))
+		}
+		.shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
+		.onPreferenceChange(PeekDialogStylePreferenceKey.self) { newStyle in
+			style = newStyle
+		}
+	}
 	
 	func body(content: Content) -> some View {
 		ZStack {
 			content
 			if isPresented {
-				VStack {
-					VStack {
-						style.makeBody(configuration: .init(isPresented: isPresented,
-															passedContent: AnyView(passedContnet),
-															onDismiss: onDismiss))
-					}
-					.shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
-					.onPreferenceChange(PeekDialogStylePreferenceKey.self) { newStyle in
-						style = newStyle
-					}
-					
-					Spacer()
+				VStack(spacing: 0) {
+					if placement == .bottom
+						|| placement == .center { Spacer(minLength: 0) }
+					dialogContent
+					if placement == .top
+						|| placement == .center { Spacer(minLength: 0) }
 				}
 				.padding()
 				.offset(y: offset.height)

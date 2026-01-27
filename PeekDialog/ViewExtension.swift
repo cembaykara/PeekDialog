@@ -17,6 +17,7 @@ public extension View {
 	///   - isPresented: A binding to a Boolean value that determines whether the dialog is currently presented.
 	///   - dismissDelay: The duration for which the dialog should remain visible before automatically dismissing.
 	///     Defaults to `.persistent`, meaning the dialog will stay visible until manually dismissed.
+	///   - placement: The vertical alignment of the dialog. Use `.top`, `.center`, or `.bottom`. Defaults to `.top`.
 	///   - content: The content to display inside the dialog.
 	///
 	///
@@ -42,11 +43,13 @@ public extension View {
 	///   if you want the dialog to remain visible until the user dismisses it manually.
 	func peekDialog<Content: View>(isPresented: Binding<Bool>,
 								   dismissDelay: PeekDialogDelay = .persistent,
+								   placement: VerticalAlignment = .top,
 								   @ViewBuilder content: () -> Content) -> some View {
 		
 		modifier(
 			PeekDialog(isPresented: isPresented,
 					   selfDismissDelay: dismissDelay,
+					   placement: placement,
 					   content: content
 					  )
 		)
@@ -63,6 +66,7 @@ public extension View {
 	///     When the item becomes `nil`, the dialog is dismissed.
 	///   - dismissDelay: The duration for which the dialog should remain visible before automatically dismissing.
 	///     Defaults to `.persistent`, meaning the dialog will stay visible until manually dismissed.
+	///   - placement: The vertical alignment of the dialog. Use `.top`, `.center`, or `.bottom`. Defaults to `.top`.
 	///   - content: The content to display inside the dialog.
 	///
 	/// ## Example:
@@ -89,28 +93,18 @@ public extension View {
 	func peekDialog<T, Content: View>(with
 									  item: Binding<T?>,
 									  dismissDelay: PeekDialogDelay = .persistent,
+									  placement: VerticalAlignment = .top,
 									  onDismiss: (() -> Void)? = nil,
 									  @ViewBuilder content: @escaping (T) -> Content) -> some View {
 		
 		modifier(
 			PeekDialog(item: item,
 					   selfDismissDelay: dismissDelay,
+					   placement: placement,
 					   onDismiss: onDismiss,
 					   content: {
 						   if let item = item.wrappedValue { content(item) }
 					   }))
-	}
-	
-	@available(*, deprecated, message: "Use peekDialog(with:dismissDelay:content:) with item parameter in closure instead.")
-	func peekDialog<T, Content: View>(with item: Binding<T?>,
-									  dismissDelay: PeekDialogDelay = .persistent,
-									  onDismiss: (() -> Void)? = nil,
-									  @ViewBuilder content: () -> Content) -> some View {
-		modifier(
-			PeekDialog(item: item,
-					   selfDismissDelay: dismissDelay,
-					   onDismiss: onDismiss,
-					   content: content))
 	}
 	
 	/// Applies a custom style to a peek dialog.
