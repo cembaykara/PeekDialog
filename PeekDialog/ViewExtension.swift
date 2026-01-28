@@ -192,7 +192,7 @@ public extension View {
     ///       }
     ///   }
     ///   ```
-    func peekDialogStack<T: Identifiable, Content: View>(
+    func peekDialog<T: Identifiable, Content: View>(
         items: Binding<[T]>,
         dismissDelay: PeekDialogDelay = .short,
         placement: VerticalAlignment = .top,
