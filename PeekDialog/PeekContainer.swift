@@ -23,12 +23,8 @@ final class PeekContainer: UIView {
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        let hit = super.hitTest(point, with: event)
-
-        if hit === self {
-            return nil
-        }
-        return hit
+        // Container now only covers content area, so any hit should go to content
+        return super.hitTest(point, with: event)
     }
 }
 #endif

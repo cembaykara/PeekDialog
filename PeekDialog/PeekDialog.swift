@@ -14,7 +14,10 @@ struct PeekDialog: ViewModifier {
     
     @State private var style: AnyDialogStyle = .default
     
-
+    /// Unique ID for this dialog instance (for multi-dialog support)
+    @State private var dialogID = UUID()
+    
+    // For non-iOS fallback
     @State private var offset: CGSize = .zero
     @State private var opacity: Double = 1.0
     @State private var timer: Timer?
@@ -22,6 +25,10 @@ struct PeekDialog: ViewModifier {
     private let delay: Double
     private let placement: VerticalAlignment
     private let onDismiss: (() -> Void)?
+    #if os(iOS)
+    private let stacking: PeekStackingBehavior
+    private let stackOffset: CGFloat
+    #endif
     
     private var transition: AnyTransition {
         switch placement {
@@ -31,6 +38,58 @@ struct PeekDialog: ViewModifier {
         }
     }
 
+    #if os(iOS)
+    init<T, Content: View>(
+        item: Binding<T?>,
+        selfDismissDelay: PeekDialogDelay = .persistent,
+        placement: VerticalAlignment = .top,
+        stacking: PeekStackingBehavior = .independent,
+        stackOffset: CGFloat = 12,
+        onDismiss: (() -> Void)? = nil,
+        @ViewBuilder content: @escaping (T) -> Content
+    ) {
+        self.delay = selfDismissDelay.duration
+        self.placement = placement
+        self.onDismiss = onDismiss
+        self.stacking = stacking
+        self.stackOffset = stackOffset
+        
+        self._isPresented = Binding<Bool>(
+            get: { item.wrappedValue != nil },
+            set: { newValue in
+                if !newValue {
+                    item.wrappedValue = nil
+                }
+            }
+        )
+        
+        self.contentBuilder = {
+            if let value = item.wrappedValue {
+                return AnyView(content(value))
+            } else {
+                return AnyView(EmptyView())
+            }
+        }
+    }
+    
+    init<Content: View>(
+        isPresented: Binding<Bool>,
+        selfDismissDelay: PeekDialogDelay = .persistent,
+        placement: VerticalAlignment = .top,
+        stacking: PeekStackingBehavior = .independent,
+        stackOffset: CGFloat = 12,
+        onDismiss: (() -> Void)? = nil,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self._isPresented = isPresented
+        self.placement = placement
+        self.onDismiss = onDismiss
+        self.delay = selfDismissDelay.duration
+        self.stacking = stacking
+        self.stackOffset = stackOffset
+        self.contentBuilder = { AnyView(content()) }
+    }
+    #else
     init<T, Content: View>(
         item: Binding<T?>,
         selfDismissDelay: PeekDialogDelay = .persistent,
@@ -73,6 +132,7 @@ struct PeekDialog: ViewModifier {
         self.delay = selfDismissDelay.duration
         self.contentBuilder = { AnyView(content()) }
     }
+    #endif
     
     @ViewBuilder
     private var dialogContent: some View {
@@ -83,6 +143,7 @@ struct PeekDialog: ViewModifier {
                 onDismiss: onDismiss
             ))
         }
+        .contentShape(Rectangle())
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
         .onPreferenceChange(PeekDialogStylePreferenceKey.self) { newStyle in
             style = newStyle
@@ -92,38 +153,26 @@ struct PeekDialog: ViewModifier {
     func body(content: Content) -> some View {
         #if os(iOS)
         content
-            .background(
-                dialogContent
-                    .hidden()
-                    .frame(width: 0, height: 0)
-            )
-            .task {
-                guard isPresented else { return }
-                await MainActor.run {
-                    presentDialog()
-                }
+            .onAppear {
+                if isPresented { presentDialog() }
             }
-            .onChange(of: isPresented) { shown in
-                if shown {
+            .onChange(of: isPresented) { newValue in
+                if newValue {
                     presentDialog()
                 } else {
-                    PeekPresenter.shared.dismiss()
+                    PeekPresenter.shared.dismiss(id: dialogID)
                 }
             }
             .onChange(of: style) { _ in
-                if isPresented {
-                    presentDialog()
-                }
+                if isPresented { presentDialog() }
             }
             .task(id: isPresented) {
+                // Keep content synced while dialog is shown
                 guard isPresented else { return }
-
-                while !Task.isCancelled && isPresented {
-                    try? await Task.sleep(nanoseconds: 100_000_000)
-                    await MainActor.run {
-                        if isPresented {
-                            presentDialog()
-                        }
+                while !Task.isCancelled {
+                    try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+                    if isPresented {
+                        await MainActor.run { presentDialog() }
                     }
                 }
             }
@@ -181,9 +230,12 @@ struct PeekDialog: ViewModifier {
     #if os(iOS)
     private func presentDialog() {
         PeekPresenter.shared.present(
+            id: dialogID,
             content: dialogContent,
             placement: placement,
             delay: delay,
+            stacking: stacking,
+            stackOffset: stackOffset,
             isPresented: $isPresented,
             onDismiss: onDismiss
         )
@@ -246,3 +298,51 @@ public enum PeekDialogDelay {
         }
     }
 }
+
+// MARK: - Stack Modifier (iOS only)
+
+#if os(iOS)
+/// A modifier that presents stacked peek dialogs for an array of items.
+struct PeekDialogStackModifier<T: Identifiable, ItemContent: View>: ViewModifier {
+    @Binding var items: [T]
+    let dismissDelay: PeekDialogDelay
+    let placement: VerticalAlignment
+    let stackOffset: CGFloat
+    let onDismiss: ((T) -> Void)?
+    let content: (T) -> ItemContent
+    
+    func body(content: Content) -> some View {
+        content
+            .background(
+                // Create a PeekDialog for each item with stacking behavior
+                ForEach(items) { item in
+                    Color.clear
+                        .modifier(
+                            PeekDialog(
+                                item: itemBinding(for: item),
+                                selfDismissDelay: dismissDelay,
+                                placement: placement,
+                                stacking: .stacked,
+                                stackOffset: stackOffset,
+                                onDismiss: { onDismiss?(item) },
+                                content: { _ in self.content(item) }
+                            )
+                        )
+                }
+            )
+    }
+    
+    private func itemBinding(for item: T) -> Binding<T?> {
+        Binding<T?>(
+            get: {
+                items.first { $0.id == item.id }
+            },
+            set: { newValue in
+                if newValue == nil {
+                    items.removeAll { $0.id == item.id }
+                }
+            }
+        )
+    }
+}
+#endif

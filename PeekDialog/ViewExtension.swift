@@ -159,4 +159,57 @@ public extension View {
         preference(key: PeekDialogStylePreferenceKey.self,
                    value: AnyDialogStyle(style))
     }
+    
+    #if os(iOS)
+    /// Displays stacked peek dialogs for an array of items.
+    ///
+    /// Unlike the single-item `peekDialog(with:)`, this modifier stacks notifications
+    /// intelligently - only the top 2 are visible at a time, and when one is dismissed,
+    /// the next one in the queue becomes visible.
+    ///
+    /// - Parameters:
+    ///   - items: A binding to an array of identifiable items. Each item creates a stacked notification.
+    ///   - dismissDelay: The duration for which each dialog should remain visible before automatically dismissing.
+    ///     Defaults to `.short`. Only the topmost notification respects the delay.
+    ///   - placement: The vertical alignment of the dialogs. Use `.top`, `.center`, or `.bottom`. Defaults to `.top`.
+    ///   - stackOffset: The vertical offset between stacked notifications in points. Defaults to `12`.
+    ///   - onDismiss: An optional closure called when a dialog is dismissed. Receives the dismissed item.
+    ///   - content: The content to display inside each dialog.
+    ///
+    /// ## Example:
+    ///   ```swift
+    ///   @State private var notifications: [MyNotification] = []
+    ///
+    ///   var body: some View {
+    ///       Button("Add Notification") {
+    ///           notifications.append(MyNotification(message: "New notification!"))
+    ///       }
+    ///       .peekDialogStack(items: $notifications, dismissDelay: .medium) { notification in
+    ///           Text(notification.message)
+    ///               .padding()
+    ///               .background(Color.white)
+    ///               .cornerRadius(8)
+    ///       }
+    ///   }
+    ///   ```
+    func peekDialogStack<T: Identifiable, Content: View>(
+        items: Binding<[T]>,
+        dismissDelay: PeekDialogDelay = .short,
+        placement: VerticalAlignment = .top,
+        stackOffset: CGFloat = 12,
+        onDismiss: ((T) -> Void)? = nil,
+        @ViewBuilder content: @escaping (T) -> Content
+    ) -> some View {
+        modifier(
+            PeekDialogStackModifier(
+                items: items,
+                dismissDelay: dismissDelay,
+                placement: placement,
+                stackOffset: stackOffset,
+                onDismiss: onDismiss,
+                content: content
+            )
+        )
+    }
+    #endif
 }
