@@ -17,24 +17,18 @@ public enum PeekStackingBehavior {
     case stacked
 }
 
-/// Manages UIWindow-level presentation of multiple peek dialogs.
 @MainActor
 final class PeekPresenter {
     
     static let shared = PeekPresenter()
     
-    /// Maximum number of visible stacked dialogs
     private let maxVisibleDialogs = 2
     
-    /// All dialog entries by ID for quick lookup
     private var dialogsByID: [UUID: DialogEntry] = [:]
     
-    /// Ordered list of stacked dialog IDs (newest last) - only for stacked behavior
     private var stackedDialogOrder: [UUID] = []
     
     private init() {}
-    
-    // MARK: - Present
     
     func present<Content: View>(
         id: UUID,
@@ -46,13 +40,11 @@ final class PeekPresenter {
         isPresented: Binding<Bool>,
         onDismiss: (() -> Void)?
     ) {
-        // If this dialog ID already exists, just update content
         if let existing = dialogsByID[id] {
             existing.contentHolder.content = AnyView(content)
             return
         }
         
-        // Get the active window scene
         guard let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first(where: { $0.activationState == .foregroundActive })
@@ -61,7 +53,6 @@ final class PeekPresenter {
             .first
         else { return }
         
-        // Add to stacking order if using stacked behavior
         if stacking == .stacked {
             stackedDialogOrder.append(id)
         }
@@ -79,35 +70,28 @@ final class PeekPresenter {
         
         let wrappedView = AnyView(presentedView)
         
-        // Create passthrough window
         let newWindow = PassthroughWindow(windowScene: scene)
         newWindow.windowLevel = .alert + 1 + CGFloat(dialogsByID.count) * 0.001
         newWindow.backgroundColor = .clear
         newWindow.isOpaque = false
         
-        // Create container
         let newContainer = PeekContainer()
         
-        // Create hosting controller
         let hosting = UIHostingController(rootView: wrappedView)
         hosting.view.backgroundColor = .clear
         
-        // Setup view hierarchy
         let rootVC = UIViewController()
         rootVC.view.backgroundColor = .clear
         rootVC.view.isUserInteractionEnabled = true
         rootVC.view.addSubview(newContainer)
         
-        // Container is sized to fit content, not full screen
         newContainer.translatesAutoresizingMaskIntoConstraints = false
         
-        // Horizontal: full width with padding
         NSLayoutConstraint.activate([
             newContainer.leadingAnchor.constraint(equalTo: rootVC.view.leadingAnchor, constant: 16),
             newContainer.trailingAnchor.constraint(equalTo: rootVC.view.trailingAnchor, constant: -16)
         ])
         
-        // Vertical: position based on placement
         switch placement {
         case .top:
             newContainer.topAnchor.constraint(equalTo: rootVC.view.safeAreaLayoutGuide.topAnchor, constant: 8).isActive = true
@@ -121,7 +105,6 @@ final class PeekPresenter {
         newContainer.addSubview(hosting.view)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false
         
-        // Hosting view fills container (which is content-sized)
         NSLayoutConstraint.activate([
             hosting.view.topAnchor.constraint(equalTo: newContainer.topAnchor),
             hosting.view.leadingAnchor.constraint(equalTo: newContainer.leadingAnchor),
@@ -132,7 +115,6 @@ final class PeekPresenter {
         
         newWindow.rootViewController = rootVC
         
-        // Store the dialog entry
         let entry = DialogEntry(
             id: id,
             window: newWindow,
@@ -145,14 +127,12 @@ final class PeekPresenter {
         )
         dialogsByID[id] = entry
         
-        // For independent dialogs, just show them immediately
         if stacking == .independent {
             holder.isFront = true
             newWindow.makeKeyAndVisible()
             return
         }
         
-        // Update visibility of all stacked dialogs at this placement
         updateVisibility(for: placement)
     }
     
@@ -165,22 +145,20 @@ final class PeekPresenter {
         let placement = entry.placement
         let stacking = entry.stacking
         
-        UIView.animate(withDuration: 0.2, animations: {
+        cleanupDialog(id: id)
+        
+        if stacking == .stacked {
+            updateVisibility(for: placement)
+        }
+        
+        UIView.animate(withDuration: 0.15, animations: {
             window.alpha = 0
-        }, completion: { [weak self] _ in
-            guard let self = self else { return }
-            // Only cleanup if this dialog is still tracked
-            if self.dialogsByID[id] != nil {
-                self.cleanupDialog(id: id)
-                // Show next dialog in queue after cleanup (only for stacked)
-                if stacking == .stacked {
-                    self.updateVisibility(for: placement)
-                }
-            }
+        }, completion: { _ in
+            window.isHidden = true
+            window.rootViewController = nil
         })
     }
     
-    /// Dismiss all active dialogs
     func dismissAll() {
         for id in dialogsByID.keys {
             dismiss(id: id)
@@ -188,18 +166,11 @@ final class PeekPresenter {
     }
     
     private func cleanupDialog(id: UUID) {
-        guard let entry = dialogsByID.removeValue(forKey: id) else { return }
+        dialogsByID.removeValue(forKey: id)
         stackedDialogOrder.removeAll { $0 == id }
-        entry.window.isHidden = true
-        entry.window.rootViewController = nil
     }
     
-    // MARK: - Visibility Management
-    
-    /// Updates visibility of dialogs at a given placement.
-    /// Only the newest `maxVisibleDialogs` are visible, others are hidden.
     private func updateVisibility(for placement: VerticalAlignment) {
-        // Get stacked dialogs at this placement in order (oldest to newest)
         let dialogsAtPlacement = stackedDialogOrder.compactMap { id -> DialogEntry? in
             guard let entry = dialogsByID[id], 
                   entry.placement == placement,
@@ -207,20 +178,16 @@ final class PeekPresenter {
             return entry
         }
         
-        // Determine which should be visible (newest ones)
         let visibleCount = min(maxVisibleDialogs, dialogsAtPlacement.count)
         let visibleStartIndex = dialogsAtPlacement.count - visibleCount
         
         for (index, entry) in dialogsAtPlacement.enumerated() {
             let shouldBeVisible = index >= visibleStartIndex
-            // 0 = front (newest visible), 1 = behind, etc.
             let stackPosition = shouldBeVisible ? (dialogsAtPlacement.count - 1 - index) : 0
             let isFront = shouldBeVisible && stackPosition == 0
-            
-            // Update front status (controls timer in SwiftUI)
+
             entry.contentHolder.isFront = isFront
-            
-            // Calculate target transform
+
             let scale: CGFloat = isFront ? 1.0 : 0.92
             var targetTransform = CGAffineTransform(scaleX: scale, y: scale)
             
@@ -228,16 +195,15 @@ final class PeekPresenter {
                 let yOffset: CGFloat
                 switch placement {
                 case .top:
-                    yOffset = CGFloat(stackPosition) * entry.stackOffset // Push down
+                    yOffset = CGFloat(stackPosition) * entry.stackOffset
                 case .bottom:
-                    yOffset = CGFloat(stackPosition) * -entry.stackOffset // Push up
+                    yOffset = CGFloat(stackPosition) * -entry.stackOffset
                 default:
-                    yOffset = CGFloat(stackPosition) * entry.stackOffset // Center: push down
+                    yOffset = CGFloat(stackPosition) * entry.stackOffset
                 }
                 targetTransform = targetTransform.translatedBy(x: 0, y: yOffset)
             }
             
-            // If transitioning from hidden to visible, set initial state first
             let wasHidden = entry.window.isHidden
             if wasHidden && shouldBeVisible {
                 entry.window.isHidden = false
@@ -251,7 +217,6 @@ final class PeekPresenter {
                     entry.container.transform = targetTransform
                 } else {
                     entry.window.alpha = 0
-                    // Reset transform when hiding
                     entry.container.transform = .identity
                 }
             } completion: { _ in
@@ -259,15 +224,12 @@ final class PeekPresenter {
                     entry.window.isHidden = true
                 }
             }
-            
-            // Update window level (newest on top)
+
             entry.window.windowLevel = .alert + 1 + CGFloat(index) * 0.001
         }
     }
     
 }
-
-// MARK: - Dialog Entry
 
 private final class DialogEntry {
     let id: UUID
@@ -291,8 +253,6 @@ private final class DialogEntry {
     }
 }
 
-// MARK: - Content Holder
-
 private final class ContentHolder: ObservableObject {
     @Published var content: AnyView
     @Published var isFront: Bool = false
@@ -301,8 +261,6 @@ private final class ContentHolder: ObservableObject {
         self.content = content
     }
 }
-
-// MARK: - Passthrough Window
 
 private final class PassthroughWindow: UIWindow {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -314,8 +272,6 @@ private final class PassthroughWindow: UIWindow {
         return hit
     }
 }
-
-// MARK: - Presented Content View
 
 private struct PresentedContentView: View {
     @ObservedObject var contentHolder: ContentHolder
@@ -333,14 +289,14 @@ private struct PresentedContentView: View {
         contentHolder.content
             .fixedSize(horizontal: false, vertical: true)
             .contentShape(Rectangle())
-            .offset(y: offset.height) // stackOffset handled by UIKit constraints
+            .offset(y: offset.height)
             .opacity(opacity)
             .gesture(dragGesture)
             .onAppear {
                 withAnimation(.easeOut(duration: 0.25)) {
                     opacity = 1.0
                 }
-                // Start timer only if front and delay > 0
+
                 if contentHolder.isFront && delay > 0 {
                     setTimer()
                 }
@@ -350,11 +306,8 @@ private struct PresentedContentView: View {
                 timer = nil
             }
             .onChange(of: contentHolder.isFront) { isFront in
-                if isFront && delay > 0 {
-                    // Became front - start timer
-                    setTimer()
-                } else {
-                    // No longer front - cancel timer
+                if isFront && delay > 0 { setTimer() }
+				else {
                     timer?.invalidate()
                     timer = nil
                 }
@@ -376,7 +329,7 @@ private struct PresentedContentView: View {
                     withAnimation(.interactiveSpring()) {
                         offset = .zero
                     }
-                    // Only restart timer if front and delay > 0
+					
                     if contentHolder.isFront && delay > 0 {
                         setTimer()
                     }

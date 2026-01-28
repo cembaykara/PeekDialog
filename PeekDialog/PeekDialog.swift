@@ -13,11 +13,7 @@ struct PeekDialog: ViewModifier {
     @Binding private var isPresented: Bool
     
     @State private var style: AnyDialogStyle = .default
-    
-    /// Unique ID for this dialog instance (for multi-dialog support)
     @State private var dialogID = UUID()
-    
-    // For non-iOS fallback
     @State private var offset: CGSize = .zero
     @State private var opacity: Double = 1.0
     @State private var timer: Timer?
@@ -25,7 +21,8 @@ struct PeekDialog: ViewModifier {
     private let delay: Double
     private let placement: VerticalAlignment
     private let onDismiss: (() -> Void)?
-    #if os(iOS)
+    
+	#if os(iOS)
     private let stacking: PeekStackingBehavior
     private let stackOffset: CGFloat
     #endif
@@ -166,16 +163,13 @@ struct PeekDialog: ViewModifier {
             .onChange(of: style) { _ in
                 if isPresented { presentDialog() }
             }
-            .task(id: isPresented) {
-                // Keep content synced while dialog is shown
-                guard isPresented else { return }
-                while !Task.isCancelled {
-                    try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+            .background(
+                RenderTrigger {
                     if isPresented {
-                        await MainActor.run { presentDialog() }
+                        presentDialog()
                     }
                 }
-            }
+            )
         #else
 		
         // Fallback for non-iOS platforms using ZStack overlay
@@ -302,7 +296,6 @@ public enum PeekDialogDelay {
 // MARK: - Stack Modifier (iOS only)
 
 #if os(iOS)
-/// A modifier that presents stacked peek dialogs for an array of items.
 struct PeekDialogStackModifier<T: Identifiable, ItemContent: View>: ViewModifier {
     @Binding var items: [T]
     let dismissDelay: PeekDialogDelay
@@ -314,7 +307,6 @@ struct PeekDialogStackModifier<T: Identifiable, ItemContent: View>: ViewModifier
     func body(content: Content) -> some View {
         content
             .background(
-                // Create a PeekDialog for each item with stacking behavior
                 ForEach(items) { item in
                     Color.clear
                         .modifier(
@@ -343,6 +335,16 @@ struct PeekDialogStackModifier<T: Identifiable, ItemContent: View>: ViewModifier
                 }
             }
         )
+    }
+}
+
+private struct RenderTrigger: View {
+    let onRender: () -> Void
+    
+    var body: some View {
+
+        let _ = onRender()
+        return Color.clear.frame(width: 0, height: 0).allowsHitTesting(false)
     }
 }
 #endif
