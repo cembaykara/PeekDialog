@@ -58,7 +58,12 @@ struct PeekStackLayout {
 	private func offset(for stackPosition: Int, stackOffset: CGFloat, placement: VerticalAlignment) -> CGFloat {
 		guard stackPosition > 0 else { return 0 }
 		let distance = CGFloat(stackPosition) * stackOffset
-		return placement == .bottom ? -distance : distance
+
+		if placement == .top || placement == .bottom {
+			return -distance
+		}
+		
+		return distance
 	}
 }
 #endif

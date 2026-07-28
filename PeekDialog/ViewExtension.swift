@@ -207,7 +207,7 @@ public extension View {
     ///       Button("Add Notification") {
     ///           notifications.append(MyNotification(message: "New notification!"))
     ///       }
-    ///       .peekDialogStack(items: $notifications, dismissDelay: .medium) { notification in
+    ///       .peekDialog(items: $notifications, dismissDelay: .medium) { notification in
     ///           Text(notification.message)
     ///               .padding()
     ///               .background(Color.white)
