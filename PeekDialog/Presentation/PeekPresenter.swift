@@ -26,35 +26,21 @@ final class PeekPresenter: ObservableObject {
 	///
 	/// Must not be called synchronously from a SwiftUI view update; the bridge
 	/// defers it to the next run-loop turn to avoid publishing mid-update.
-	func upsert(
-		id: UUID,
-		content: AnyView,
-		placement: VerticalAlignment,
-		delay: Double,
-		stacking: PeekStackingBehavior,
-		stackOffset: CGFloat,
-		setPresented: @escaping (Bool) -> Void,
-		onDismiss: (() -> Void)?
-	) {
+	func upsert(_ state: PeekDialogState) {
 		ensureWindow()
 
-		if let existing = dialogs.first(where: { $0.id == id }) {
-			existing.update(content: content, setPresented: setPresented, onDismiss: onDismiss)
+		// Existing dialog: copy only the mutable fields so the stored instance
+		// keeps its identity (and thus its gesture/animation state).
+		if let existing = dialogs.first(where: { $0.id == state.id }) {
+			existing.update(
+				content: state.content,
+				setPresented: state.setPresented,
+				onDismiss: state.onDismiss
+			)
 			return
 		}
 
-		dialogs.append(
-			PeekDialogState(
-				id: id,
-				content: content,
-				placement: placement,
-				delay: delay,
-				stacking: stacking,
-				stackOffset: stackOffset,
-				setPresented: setPresented,
-				onDismiss: onDismiss
-			)
-		)
+		dialogs.append(state)
 	}
 
 	func dismiss(id: UUID) {

@@ -159,6 +159,29 @@ public extension View {
         preference(key: PeekDialogStylePreferenceKey.self,
                    value: AnyDialogStyle(style))
     }
+
+    /// Controls whether a peek dialog can be dismissed by swiping it away.
+    ///
+    /// By default a dialog can be dragged to dismiss. Apply this modifier inside
+    /// the `peekDialog` closure to disable that gesture; the dialog will then only
+    /// dismiss automatically (via its delay) or when its binding is cleared.
+    ///
+    /// - Parameter disabled: Whether the swipe-to-dismiss gesture is disabled. Defaults to `true`.
+    ///
+    /// ## Example:
+    /// ```swift
+    /// .peekDialog(isPresented: $showDialog) {
+    ///     Text("You can't swipe me away")
+    ///         .padding()
+    ///         .peekInteractiveDismissDisabled()
+    /// }
+    /// ```
+    ///
+    /// - Note: Like `dialogStyle`, apply this to the content **inside** the `peekDialog`
+    ///   closure, not on the view that has the `peekDialog` modifier.
+    func peekInteractiveDismissDisabled(_ disabled: Bool = true) -> some View {
+        preference(key: PeekInteractiveDismissKey.self, value: disabled)
+    }
     
     #if os(iOS)
     /// Displays stacked peek dialogs for an array of items.

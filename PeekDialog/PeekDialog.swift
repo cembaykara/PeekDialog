@@ -19,6 +19,7 @@ struct PeekDialog: ViewModifier {
 	@State private var offset: CGSize = .zero
 	@State private var opacity: Double = 1.0
 	@State private var timer: Timer?
+	@State private var dismissDisabled = false
 	#endif
 	
 	private let delay: Double
@@ -186,7 +187,8 @@ struct PeekDialog: ViewModifier {
 								withAnimation(.interactiveSpring()) { offset = .zero }
 								if delay > 0 { setTimer() }
 							}
-						}
+						},
+					including: dismissDisabled ? .subviews : .all
 				)
 				.onAppear {
 					opacity = 1.0
@@ -215,6 +217,9 @@ struct PeekDialog: ViewModifier {
 		.shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
 		.onPreferenceChange(PeekDialogStylePreferenceKey.self) { newStyle in
 			style = newStyle
+		}
+		.onPreferenceChange(PeekInteractiveDismissKey.self) { disabled in
+			dismissDisabled = disabled
 		}
 	}
 	

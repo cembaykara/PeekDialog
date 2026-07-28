@@ -58,14 +58,16 @@ struct PeekDialogBridge: UIViewRepresentable {
 			let presenter = PeekPresenter.shared
 			if isPresented {
 				presenter.upsert(
-					id: id,
-					content: content,
-					placement: placement,
-					delay: delay,
-					stacking: stacking,
-					stackOffset: stackOffset,
-					setPresented: { binding.wrappedValue = $0 },
-					onDismiss: dismissHandler
+					PeekDialogState(
+						id: id,
+						content: content,
+						placement: placement,
+						delay: delay,
+						stacking: stacking,
+						stackOffset: stackOffset,
+						setPresented: { binding.wrappedValue = $0 },
+						onDismiss: dismissHandler
+					)
 				)
 			} else {
 				presenter.dismiss(id: id)

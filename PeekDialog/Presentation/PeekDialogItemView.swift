@@ -20,6 +20,7 @@ struct PeekDialogItemView: View {
 	@State private var opacity: Double = 0
 	@State private var timer: Timer?
 	@State private var isDragging = false
+	@State private var dismissDisabled = false
 
 	var body: some View {
 		styledContent
@@ -34,7 +35,8 @@ struct PeekDialogItemView: View {
 					Color.clear.contentShape(Rectangle())
 				}
 			}
-			.highPriorityGesture(dragGesture)
+			// `.subviews` keeps content gestures (buttons) working while disabling drag.
+			.highPriorityGesture(dragGesture, including: dismissDisabled ? .subviews : .all)
 			.onAppear {
 				withAnimation(.easeOut(duration: 0.25)) { opacity = 1.0 }
 				if isFront && state.delay > 0 { setTimer() }
@@ -61,6 +63,9 @@ struct PeekDialogItemView: View {
 				state.content
 					.onPreferenceChange(PeekDialogStylePreferenceKey.self) { newStyle in
 						if newStyle != style { style = newStyle }
+					}
+					.onPreferenceChange(PeekInteractiveDismissKey.self) { disabled in
+						dismissDisabled = disabled
 					}
 			),
 			onDismiss: state.onDismiss
