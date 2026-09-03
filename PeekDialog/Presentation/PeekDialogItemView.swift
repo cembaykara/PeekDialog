@@ -21,12 +21,17 @@ struct PeekDialogItemView: View {
 	@State private var timer: Timer?
 	@State private var isDragging = false
 	@State private var dismissDisabled = false
+	@State private var placementInset: CGFloat = 0
 
 	var body: some View {
 		styledContent
 			.fixedSize(horizontal: false, vertical: true)
 			.contentShape(Rectangle())
 			.shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 10)
+			.modifier(PeekPlacementInsetModifier(
+				inset: placementInset,
+				placement: state.placement
+			))
 			.background(frameReporter)
 			.offset(y: offset.height)
 			.opacity(opacity)
@@ -66,6 +71,9 @@ struct PeekDialogItemView: View {
 					}
 					.onPreferenceChange(PeekInteractiveDismissKey.self) { disabled in
 						dismissDisabled = disabled
+					}
+					.onPreferenceChange(PeekPlacementInsetKey.self) { inset in
+						placementInset = inset
 					}
 			),
 			onDismiss: state.onDismiss

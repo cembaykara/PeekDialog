@@ -20,6 +20,7 @@ struct PeekDialog: ViewModifier {
 	@State private var opacity: Double = 1.0
 	@State private var timer: Timer?
 	@State private var dismissDisabled = false
+	@State private var placementInset: CGFloat = 0
 	#endif
 	
 	private let delay: Double
@@ -164,6 +165,10 @@ struct PeekDialog: ViewModifier {
 						Spacer(minLength: 0)
 					}
 					dialogContent
+						.modifier(PeekPlacementInsetModifier(
+							inset: placementInset,
+							placement: placement
+						))
 					if placement == .top || placement == .center {
 						Spacer(minLength: 0)
 					}
@@ -220,6 +225,9 @@ struct PeekDialog: ViewModifier {
 		}
 		.onPreferenceChange(PeekInteractiveDismissKey.self) { disabled in
 			dismissDisabled = disabled
+		}
+		.onPreferenceChange(PeekPlacementInsetKey.self) { inset in
+			placementInset = inset
 		}
 	}
 	
