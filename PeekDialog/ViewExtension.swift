@@ -182,7 +182,30 @@ public extension View {
     func peekInteractiveDismissDisabled(_ disabled: Bool = true) -> some View {
         preference(key: PeekInteractiveDismissKey.self, value: disabled)
     }
-    
+
+    /// Adds extra inset from the placement edge, on top of the host’s fixed padding.
+    ///
+    /// Applied as a visual `.offset` so it does not change layout or affect other
+    /// dialogs in the same placement. For `.top` / `.center` the dialog moves down;
+    /// for `.bottom` it moves up.
+    ///
+    /// - Parameter inset: Additional distance in points.
+    ///
+    /// ## Example:
+    /// ```swift
+    /// .peekDialog(isPresented: $showDialog, placement: .bottom) {
+    ///     Text("Saved")
+    ///         .padding()
+    ///         .peekPlacementInset(24)
+    /// }
+    /// ```
+    ///
+    /// - Note: Like `dialogStyle`, apply this to the content **inside** the
+    ///   `peekDialog` closure, not on the view that has the `peekDialog` modifier.
+    func peekPlacementInset(_ inset: CGFloat) -> some View {
+        preference(key: PeekPlacementInsetKey.self, value: inset)
+    }
+
     #if os(iOS)
     /// Displays stacked peek dialogs for an array of items.
     ///

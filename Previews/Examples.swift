@@ -333,7 +333,7 @@ import PeekDialog
 				.padding()
 			}
 			// Toast Notification Dialog
-			.peekDialog(isPresented: $showToast, dismissDelay: .short) {
+			.peekDialog(isPresented: $showToast, dismissDelay: .short, placement: .bottom) {
 				Text("Copied to clipboard")
 					.font(.body)
 					.foregroundColor(.white)
@@ -344,6 +344,7 @@ import PeekDialog
 							.fill(Color.black.opacity(0.8))
 					}
 					.dialogStyle(.plain)
+					.peekPlacementInset(24)
 			}
 		}
 	}
