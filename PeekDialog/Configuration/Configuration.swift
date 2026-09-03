@@ -84,10 +84,3 @@ public extension DialogStyle where Self == PlainDialogStyle {
 	static var plain: Self { PlainDialogStyle() }
 }
 
-struct PeekDialogStylePreferenceKey: PreferenceKey {
-	static var defaultValue: AnyDialogStyle = .default
-	
-	static func reduce(value: inout AnyDialogStyle, nextValue: () -> AnyDialogStyle) {
-		value = nextValue()
-	}
-}
